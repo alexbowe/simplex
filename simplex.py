@@ -22,7 +22,9 @@ def multinomial(ks):
     n = 0
     for k in ks:
 	n += k
-	product *= binomial(n, k)
+        b = binomial(n, k)
+        if b is not None:
+            product *= b
     return product
 
 def lower_coeffs(ks):
@@ -38,8 +40,6 @@ def lower_coeffs(ks):
 # pascal_simplex([k1, k2, k3]) where sum(k1,k2,k3) = i
 # for ith cross section
 # hence, generate each integer partition of 123
-# and call it for that... (try to use the symmetry if it is too much)
-# leave it running on bruce or something
 def pascal_simplex(ks):
     if sum(ks) == 0: return 1
     total = 0
@@ -51,8 +51,12 @@ def pascal_simplex(ks):
 # has to be at least 2
 def partitions(n, m):
     a = [n - m + 1] + [1] * (m-1) + [-1]
+    assert(len(a) == m + 1)
 
     while True:
+        if sum(a[0:-1]) != n: return
+        if 0 in a[0:-1]: return
+        #assert(sum(a[0:-1]) == n)
         yield a[0:-1]
         if a[1] >= a[0] - 1:
             j = 2
@@ -60,7 +64,8 @@ def partitions(n, m):
             while a[j] >= a[0] - 1:
                 s = s+a[j]
                 j += 1
-            if j > m-1: return
+                if j > m - 1: break
+            if j > m -1: break
             else:
                 x = a[j] + 1
                 a[j] = x
@@ -68,23 +73,27 @@ def partitions(n, m):
             while j > 0:
                 a[j] = x
                 s = s - x
-                j = j - 1
+                j -= 1
             a[0] = s
         else:
             a[0] -= 1
             a[1] += 1
 
-def prefix(padding, it):
-    pre = [0] * (padding)
-    prefixit = lambda tup: pre + tup
-    return itertools.imap(prefixit, it)
-
 def partitions_with_0(n, m):
-    yield [0] * (m-1) + [n]
-    if n < m: return
-    for i in range(2,m+1):
-        for part in partitions(n, i):
-            yield [0] * (m-i) + part
+    if m == 0: return
+    if n == 0:
+       yield [0] * m
+       return
+    if n == 1:
+        if m > 0:
+            yield [0] * (m-1) + [1]
+        return
+    if m == 1:
+        yield [n]
+        return
+    for i in range(m-1, -1, -1):
+	for part in partitions(n, m - i):
+            yield [0] * (i) + part
 
 def make_table(row, dimensions):
     entry = lambda ks: (ks, pascal_simplex(ks))
@@ -93,12 +102,17 @@ def make_table(row, dimensions):
 def ks_to_str(ks):
     return ','.join(map(str, ks))
 
+# Doesn't print points (k-sets) that are equivalent under permutation
+# might use itertools to add that later
+# then sort them lexicographically
+# still might be possible to use caching (of upper rows)
+# should make a decorator that logs all calculations that have been done b4
+# TODO: add graphviz output (as soon as I work out the connectivity)
 if __name__ == "__main__":
     import sys
     args = sys.argv
 
     usage = 'USAGE: python %s %s %s' % (args[0], '<row>', '<# dims>')
-
 
     if len(args) != 3:
         print >> sys.stderr, usage
