@@ -46,3 +46,77 @@ def pascal_simplex(ks):
     for k in lower_coeffs(ks):
         total += multinomial(k)
     return total
+
+# m parts k_1, k_2, ... k_m, where the sum is n
+# has to be at least 2
+def partitions(n, m):
+    a = [n - m + 1] + [1] * (m-1) + [-1]
+
+    while True:
+        yield a[0:-1]
+        if a[1] >= a[0] - 1:
+            j = 2
+            s = a[0] + a[1] - 1
+            while a[j] >= a[0] - 1:
+                s = s+a[j]
+                j += 1
+            if j > m-1: return
+            else:
+                x = a[j] + 1
+                a[j] = x
+                j -= 1
+            while j > 0:
+                a[j] = x
+                s = s - x
+                j = j - 1
+            a[0] = s
+        else:
+            a[0] -= 1
+            a[1] += 1
+
+def prefix(padding, it):
+    pre = [0] * (padding)
+    prefixit = lambda tup: pre + tup
+    return itertools.imap(prefixit, it)
+
+def rotation(seq):
+    l = len(seq)
+    for i in range(l):
+        seq = [seq[-1]] + seq[:-1]
+        yield seq
+
+def partitions_with_0(n, m):
+    yield [0] * (m-1) + [n]
+    if n < m: return
+    for i in range(2,m+1):
+        for part in partitions(n, i):
+            yield [0] * (m-i) + part
+
+def make_table(row, dimensions):
+    entry = lambda ks: (ks, pascal_simplex(ks))
+    return itertools.imap(entry, partitions_with_0(row, dimensions))
+
+def ks_to_str(ks):
+    return ','.join(map(str, ks))
+
+if __name__ == "__main__":
+    import sys
+    args = sys.argv
+
+    usage = 'USAGE: python %s %s %s' % (args[0], '<row>', '<# dims>')
+
+
+    if len(args) != 3:
+        print >> sys.stderr, usage
+        exit()
+    else:
+        try:
+            row = int(args[1])
+            dims = int(args[2])
+        except:
+            print >> sys.stderr, usage
+            exit()
+            
+    t = make_table(row, dims)
+    for (ks, v) in t:
+        print ks_to_str(ks), v
