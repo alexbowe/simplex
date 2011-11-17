@@ -79,12 +79,6 @@ def prefix(padding, it):
     prefixit = lambda tup: pre + tup
     return itertools.imap(prefixit, it)
 
-def rotation(seq):
-    l = len(seq)
-    for i in range(l):
-        seq = [seq[-1]] + seq[:-1]
-        yield seq
-
 def partitions_with_0(n, m):
     yield [0] * (m-1) + [n]
     if n < m: return
