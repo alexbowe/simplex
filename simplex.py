@@ -21,7 +21,7 @@ def multinomial(ks):
     product = 1 
     n = 0
     for k in ks:
-	n += k
+        n += k
         b = binomial(n, k)
         if b is not None:
             product *= b
@@ -30,7 +30,7 @@ def multinomial(ks):
 def lower_coeffs(ks):
     ks = list(ks)
     for i in xrange(len(ks)):
-	if ks[i] == 0:
+        if ks[i] == 0:
             continue
         ks[i] -= 1
         yield ks
@@ -92,39 +92,51 @@ def partitions_with_0(n, m):
         yield [n]
         return
     for i in range(m-1, -1, -1):
-	for part in partitions(n, m - i):
+        for part in partitions(n, m - i):
             yield [0] * (i) + part
 
 def make_table(row, dimensions):
-    entry = lambda ks: (ks, pascal_simplex(ks))
+    entry = lambda ks: (tuple(ks), pascal_simplex(ks))
     return itertools.imap(entry, partitions_with_0(row, dimensions))
 
 def ks_to_str(ks):
     return ','.join(map(str, ks))
 
-# Doesn't print points (k-sets) that are equivalent under permutation
-# might use itertools to add that later
-# then sort them lexicographically
-# still might be possible to use caching (of upper rows)
-# should make a decorator that logs all calculations that have been done b4
+make_perms = lambda ks: {}.fromkeys(itertools.permutations(ks)).keys()
+def unique_perms(t):
+    for ks,v in t:
+      for k_perm in make_perms(ks):
+        yield k_perm, v
+
+# might be possible to use caching (of upper rows) if performance is needed
 # TODO: add graphviz output (as soon as I work out the connectivity)
+# I think it is connected if a co-ord differs by +1 in one dimension
+# TODO: prettyprint
+# TODO: OpenGL point cloud sort of thing (rotate 3d pascal to k rows)
 if __name__ == "__main__":
     import sys
     args = sys.argv
 
-    usage = 'USAGE: python %s %s %s' % (args[0], '<row>', '<# dims>')
+    #TODO: use the python cl-args lib so its easy to add pretty print and gl
+    usage = 'USAGE: python %s %s %s %s' % (args[0], '<row>', '<# dims>', '[-p]')
 
-    if len(args) != 3:
+    all_perms = False
+
+    if len(args) < 3 or len(args) > 4 or (len(args) == 4 and args[-1] != '-p'):
         print >> sys.stderr, usage
         exit()
-    else:
+    else: 
         try:
             row = int(args[1])
             dims = int(args[2])
+            all_perms = (len(args) == 4 and args[-1]=='-p')
         except:
             print >> sys.stderr, usage
             exit()
-            
+
     t = make_table(row, dims)
+    if all_perms:
+      t = unique_perms(t)
+
     for (ks, v) in t:
-        print ks_to_str(ks), v
+      print ks_to_str(ks), v
