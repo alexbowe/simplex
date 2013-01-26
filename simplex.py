@@ -1,5 +1,18 @@
 import itertools
 
+# use tetrehedral numbers to map simplex to 1D array
+t = lambda r, n: (3*n**2 + n**3 * (r - 2) - n*(r-5))/6
+f = lambda d,h,v: t(d,h) - t(d,h-v)
+def make_mapper(height):
+  def map_point(h, v):
+    dim = len(v)
+    if dim == 1: return v[0]
+    return f(dim, h, v[0]) + map_point(h - v[0], v[1:])
+  return lambda *v: map_point(height, v)
+
+def num_elements(h, d):
+  return binomial(d+h-1, h)
+
 def pascal_2D_row(n):
     """Returns a generator where the ith element of the """
     # Which side of pascal's triangle is the kth position on?
