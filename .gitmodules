@@ -1,0 +1,3 @@
+[submodule "quick_check"]
+	path = quick_check
+	url = git://github.com/alexbowe/quick_check.git
